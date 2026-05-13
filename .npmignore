@@ -1,0 +1,11 @@
+# whitelist через "files" в package.json, но дублируем для надёжности
+src/
+test/
+docs/
+scripts/
+tsconfig.json
+.gitignore
+.npmignore
+.safeflow/
+node_modules/
+*.test.js

@@ -1,0 +1,16 @@
+# CODEOWNERS — кто автоматически назначается ревьюером для разных частей кода.
+#
+# Замените `@YOUR-USERNAME` на свой GitHub username перед публикацией.
+# Чем уже scope — тем выше требования к ревьюеру.
+
+# По умолчанию — все мейнтейнеры
+*                                  @YOUR-USERNAME
+
+# Security-критичные файлы — требуют особого внимания
+/src/security/                     @YOUR-USERNAME
+/src/mcp/server.ts                 @YOUR-USERNAME
+/scripts/audit-mcp-descriptions.mjs @YOUR-USERNAME
+/SECURITY.md                       @YOUR-USERNAME
+/.github/workflows/                @YOUR-USERNAME
+/package.json                      @YOUR-USERNAME
+/package-lock.json                 @YOUR-USERNAME
