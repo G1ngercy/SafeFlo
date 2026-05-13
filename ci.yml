@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Минимальные разрешения по умолчанию: только чтение содержимого репозитория.
+# Отдельные джобы повышают разрешения только там, где это нужно.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node }} on ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      # Используем npm ci — он строго следует package-lock.json и падает,
+      # если lock-файл расходится с package.json. Это защита от тихих
+      # подмен версий зависимостей.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+  audit:
+    name: Security audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # npm audit на высоком уровне. Не падаем на low/moderate — это шум,
+      # но падаем на high/critical, которые требуют немедленного внимания.
+      - name: npm audit (high+)
+        run: npm audit --audit-level=high
+
+  package-checks:
+    name: Package integrity checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Эта проверка — наш центральный security invariant:
+      # в package.json не должно быть никаких install-скриптов.
+      # Если кто-то случайно или намеренно добавит preinstall/install/postinstall,
+      # CI упадёт и PR не сольётся.
+      - name: Assert no install scripts in package.json
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            const forbidden = ['preinstall', 'install', 'postinstall', 'preuninstall', 'postuninstall'];
+            const found = forbidden.filter(k => pkg.scripts && pkg.scripts[k]);
+            if (found.length) {
+              console.error('Forbidden install scripts found:', found);
+              process.exit(1);
+            }
+            console.log('OK: no install scripts.');
+          "
+
+      # Проверяем, что все версии зависимостей зафиксированы (без ^ или ~).
+      # Это защита от supply-chain атак через подмену последней минорной версии.
+      - name: Assert pinned dependency versions
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+            const loose = Object.entries(allDeps).filter(([_, v]) => /^[\^~]/.test(v));
+            if (loose.length) {
+              console.error('Unpinned dependencies (must use exact versions):');
+              for (const [k, v] of loose) console.error('  ' + k + ': ' + v);
+              process.exit(1);
+            }
+            console.log('OK: all', Object.keys(allDeps).length, 'dependencies pinned.');
+          "
+
+      # Аудит MCP tool descriptions — проверяем, что в описаниях нет
+      # императивов в адрес модели или упоминаний внешних URL.
+      # Это защита от того класса атак, что был замечен в ruflo:
+      # скрытые инструкции в описаниях инструментов.
+      - name: Audit MCP tool descriptions
+        run: node scripts/audit-mcp-descriptions.mjs
+
+      # Проверяем, что код не использует опасные API.
+      - name: Assert no dangerous APIs in source
+        run: |
+          # eval, Function constructor, child_process.exec на пользовательских данных
+          if grep -rn --include='*.ts' -E '\beval\(|new Function\(|child_process\.exec\(' src/; then
+            echo "Found dangerous API usage in src/"
+            exit 1
+          fi
+          echo "OK: no dangerous APIs."
+
+      # Проверяем, что нигде не делаются сетевые вызовы.
+      - name: Assert no network calls in source
+        run: |
+          if grep -rn --include='*.ts' -E '\bfetch\(|require\(.https?.\)|from .https?:|http\.request|https\.request|net\.connect' src/; then
+            echo "Found network call in src/"
+            exit 1
+          fi
+          echo "OK: no network calls in source."
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript strict check
+        run: npx tsc --noEmit --strict
