@@ -5,72 +5,74 @@
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
 [![No install scripts](https://img.shields.io/badge/install_scripts-none-blue.svg)](SECURITY.md)
 
-Локальная и прозрачная платформа оркестрации AI-агентов для Claude Code.
-MCP-сервер с инструментами для долговременной памяти, планирования задач и координации логических агентов — без сетевых вызовов, без скрытых install-скриптов, без модификации файлов вне проекта.
+A local and transparent AI agent orchestration platform for Claude Code.
+MCP server with tools for persistent memory, task planning, and logical agent coordination — no network calls, no hidden install scripts, no modification of files outside the project.
+
+> 🇷🇺 Read in Russian: [README.ru.md](README.ru.md)
 
 ## TL;DR
 
-> Дайте Claude Code персистентную память, структурированные планы и логических агентов. Все данные — в `./.safeflow/`. Удаление — одной командой. Никаких сюрпризов.
+> Give Claude Code persistent memory, structured plans, and logical agents. All data lives in `./.safeflow/`. Uninstall with a single command. No surprises.
 
-## Содержание
+## Contents
 
-- [Что внутри](#что-внутри)
-- [Установка](#установка)
-- [Использование из Claude Code](#использование-из-claude-code)
-- [Программный API](#программный-api)
-- [Удаление](#удаление)
-- [Безопасность](#безопасность)
-- [Сравнение с подобными проектами](#сравнение-с-подобными-проектами)
-- [Вклад](#вклад)
-- [Лицензия](#лицензия)
+- [What's inside](#whats-inside)
+- [Installation](#installation)
+- [Using from Claude Code](#using-from-claude-code)
+- [Programmatic API](#programmatic-api)
+- [Uninstall](#uninstall)
+- [Security](#security)
+- [Comparison with similar projects](#comparison-with-similar-projects)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Что внутри
+## What's inside
 
-| Модуль | Описание |
+| Module | Description |
 |---|---|
-| **Memory store** | SQLite + FTS5 (full-text search) для key-value памяти с namespace-изоляцией. Параметризованные SQL-запросы. |
-| **Task planner** | Структурированная декомпозиция целей на шаги с зависимостями и проверяемыми переходами статусов. |
-| **Agent coordinator** | Регистрация логических агентов с изолированным memory namespace для каждого. Без фоновых процессов. |
-| **MCP server** | 15 чистых инструментов с прозрачными описаниями. |
-| **Audit log** | Append-only JSONL всех операций. |
-| **CLI** | `init`, `status`, `mcp`, `uninstall` (с реальной полной очисткой). |
+| **Memory store** | SQLite + FTS5 (full-text search) for key-value memory with namespace isolation. Parameterized SQL queries. |
+| **Task planner** | Structured goal decomposition into steps with dependencies and verified status transitions. |
+| **Agent coordinator** | Registration of logical agents with an isolated memory namespace each. No background processes. |
+| **MCP server** | 15 clean tools with transparent descriptions. |
+| **Audit log** | Append-only JSONL of all operations. |
+| **CLI** | `init`, `status`, `mcp`, `uninstall` (with real, complete cleanup). |
 
-## Установка
+## Installation
 
 ```bash
-# Клонируйте репозиторий — никаких curl | bash установщиков.
+# Clone the repository — no curl | bash installers.
 git clone https://github.com/YOUR-ORG/safeflow.git
 cd safeflow
 
-# npm ci строго следует package-lock.json — никаких подмен версий.
-# В package.json нет preinstall/postinstall скриптов.
+# npm ci strictly follows package-lock.json — no version substitution.
+# package.json contains no preinstall/postinstall scripts.
 npm ci
 
-# Сборка и тесты
+# Build and test
 npm run build
 npm test
 ```
 
-Чтобы использовать в своём проекте:
+To use in your project:
 
 ```bash
 cd /path/to/your/project
 node /path/to/safeflow/dist/cli.js init
 ```
 
-Это создаст:
-- `./.safeflow/` — локальные БД и audit log
-- `./.claude/commands/safeflow-*.md` — slash-команды для Claude Code
+This creates:
+- `./.safeflow/` — local databases and audit log
+- `./.claude/commands/safeflow-*.md` — slash commands for Claude Code
 
-Чтобы подключить MCP-сервер к Claude Code:
+To register the MCP server with Claude Code:
 
 ```bash
 claude mcp add safeflow -- node /path/to/safeflow/dist/mcp/server.js
 ```
 
-## Использование из Claude Code
+## Using from Claude Code
 
-После подключения у Claude Code появятся инструменты:
+Once connected, Claude Code gains these tools:
 
 **Memory:**
 - `memory_store(namespace, key, content, metadata?)`
@@ -84,7 +86,7 @@ claude mcp add safeflow -- node /path/to/safeflow/dist/mcp/server.js
 - `plan_add_step(planId, title, description, dependsOn?)`
 - `plan_update_step_status(stepId, status)`
 - `plan_get(planId)`
-- `plan_ready_steps(planId)` — шаги, готовые к выполнению
+- `plan_ready_steps(planId)` — steps that are ready to start
 - `plan_list(limit?)`
 
 **Agents:**
@@ -93,11 +95,11 @@ claude mcp add safeflow -- node /path/to/safeflow/dist/mcp/server.js
 - `agent_update_status(agentId, status)`
 
 **Audit:**
-- `audit_tail(n?)` — последние N событий из аудит-лога
+- `audit_tail(n?)` — last N events from the audit log
 
-И slash-команды: `/safeflow-plan`, `/safeflow-memory`, `/safeflow-agents`.
+And slash commands: `/safeflow-plan`, `/safeflow-memory`, `/safeflow-agents`.
 
-## Программный API
+## Programmatic API
 
 ```typescript
 import {
@@ -124,62 +126,62 @@ const step = planner.addStep(plan.id, {
 const agent = coord.register("researcher", "Survey auth libraries");
 ```
 
-## Удаление
+## Uninstall
 
 ```bash
 node /path/to/safeflow/dist/cli.js uninstall --yes
 ```
 
-Удалит:
-- `./.safeflow/` — все локальные БД и аудит
+This removes:
+- `./.safeflow/` — all local databases and audit log
 - `./.claude/commands/safeflow-*.md`
 
-SafeFlow не использует никаких глобальных путей, поэтому за пределами проекта удалять нечего. **Реально нечего.** Проверьте сами: `grep -rn "homedir\|os\.home" src/` ничего не вернёт.
+SafeFlow uses no global paths whatsoever, so there is nothing to clean up outside the project. **Genuinely nothing.** Verify for yourself: `grep -rn "homedir\|os\.home" src/` returns no results.
 
-## Безопасность
+## Security
 
-Полная модель угроз и гарантии — в [SECURITY.md](SECURITY.md). Краткое резюме:
+The full threat model and guarantees are in [SECURITY.md](SECURITY.md). Quick summary:
 
-- **Нет install-скриптов** в `package.json` (CI проверяет это автоматически).
-- **Нет сетевых вызовов** в коде (CI проверяет grep'ом).
-- **Нет модификации файлов вне проекта** — все данные в `./.safeflow/`.
-- **Параметризованные SQL** везде, валидация Zod на каждом входе.
-- **Защита от path traversal** (включая `....//` обходы), prototype pollution, SQL injection.
-- **Прозрачные MCP descriptions** — без скрытых директив для LLM. Автоматически аудитируются в CI.
-- **Полное удаление** одной командой.
-- **Минимум зависимостей** — 3 пакета с pinned версиями (`@modelcontextprotocol/sdk`, `better-sqlite3`, `zod`).
-- **Provenance** — npm-пакеты публикуются с криптографической attestation через GitHub Actions.
+- **No install scripts** in `package.json` (CI checks this automatically).
+- **No network calls** in the code (CI greps for this).
+- **No modification of files outside the project** — all data in `./.safeflow/`.
+- **Parameterized SQL** everywhere, Zod validation on every input.
+- **Protection against path traversal** (including `....//` bypasses), prototype pollution, SQL injection.
+- **Transparent MCP descriptions** — no hidden directives to the LLM. Audited automatically in CI.
+- **Complete uninstall** with a single command.
+- **Minimal dependencies** — 3 packages with pinned versions (`@modelcontextprotocol/sdk`, `better-sqlite3`, `zod`).
+- **Provenance** — npm packages are published with cryptographic attestation via GitHub Actions.
 
-Уязвимости — через приватный security advisory, **не** через публичный issue. См. [SECURITY.md](SECURITY.md#сообщить-об-уязвимости).
+Vulnerabilities — through private security advisory, **not** through public issues. See [SECURITY.md](SECURITY.md#reporting-a-vulnerability).
 
-## Сравнение с подобными проектами
+## Comparison with similar projects
 
-SafeFlow задуман как безопасная альтернатива функционально близким проектам. Главные архитектурные отличия:
+SafeFlow is designed as a secure alternative to functionally similar projects. The main architectural differences:
 
-| Аспект | Проблемные проекты | SafeFlow |
+| Aspect | Problematic projects | SafeFlow |
 |---|---|---|
-| Установка | `curl ... \| bash` из CDN | `git clone` + `npm ci` с pinned версиями |
-| Install-скрипты | `preinstall`, `postinstall` | Их нет, CI проверяет |
-| Хранение данных | `~/.claude`, `~/.npm`, фоновые директории | Только `./.safeflow/` в проекте |
-| Сетевые вызовы | К внешним сервисам, telemetry | Их нет, CI проверяет |
-| MCP descriptions | Со скрытыми инструкциями | Только функциональные, аудитируются |
-| Удаление | Невозможно без следов | `safeflow uninstall --yes` |
-| Открытые CVE | Накапливаются | Reproducible builds, dependabot |
-| "Enterprise" функции | Заглушки с фейковыми числами | Только то, что реально работает |
-| Поверхность API | 87+ MCP tools, 60+ типов агентов | 15 MCP tools, 1 концепция логического агента |
+| Installation | `curl ... \| bash` from a CDN | `git clone` + `npm ci` with pinned versions |
+| Install scripts | `preinstall`, `postinstall` | None, CI verifies |
+| Data storage | `~/.claude`, `~/.npm`, background directories | Only `./.safeflow/` in the project |
+| Network calls | To external services, telemetry | None, CI verifies |
+| MCP descriptions | With hidden instructions | Functional only, audited |
+| Uninstall | Impossible without leftovers | `safeflow uninstall --yes` |
+| Open CVEs | Accumulate | Reproducible builds, Dependabot |
+| "Enterprise" features | Stubs with fake numbers | Only what genuinely works |
+| API surface | 87+ MCP tools, 60+ agent types | 15 MCP tools, one logical-agent concept |
 
-**Меньше фич, больше прозрачности.** Мы не реализуем многомашинную "federated" координацию или "enterprise security scan". Мы делаем три вещи (память, планы, координация) и делаем их без сюрпризов.
+**Fewer features, more transparency.** We don't implement cross-machine "federated" coordination or "enterprise security scan." We do three things (memory, plans, coordination) and do them without surprises.
 
-## Вклад
+## Contributing
 
-См. [CONTRIBUTING.md](CONTRIBUTING.md). Кратко:
+See [CONTRIBUTING.md](CONTRIBUTING.md). In short:
 
-- Для багов — issue → fork → PR с тестом.
-- Для фич — **сначала issue**, потом PR.
-- Для уязвимостей — приватный security advisory, не публичный issue.
+- For bugs — issue → fork → PR with a test.
+- For features — **issue first**, then PR.
+- For vulnerabilities — private security advisory, not a public issue.
 
 Code of Conduct — [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-## Лицензия
+## License
 
-MIT, см. [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).
