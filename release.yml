@@ -1,0 +1,121 @@
+name: Release
+
+# Срабатывает только при пуше тега v*.*.*.
+# Это значит: релиз требует осознанного действия мейнтейнера,
+# а не автоматического триггера на каждый push в main.
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  # Прежде чем что-то публиковать, прогоняем все проверки заново.
+  # Полагаться на то, что main был зелёный, недостаточно — мог быть
+  # форс-пуш или race condition между PR.
+  preflight:
+    name: Pre-release checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Package integrity (no install scripts)
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            const forbidden = ['preinstall', 'install', 'postinstall', 'preuninstall', 'postuninstall'];
+            const found = forbidden.filter(k => pkg.scripts && pkg.scripts[k]);
+            if (found.length) { console.error('Forbidden install scripts:', found); process.exit(1); }
+          "
+
+      - name: Audit MCP descriptions
+        run: node scripts/audit-mcp-descriptions.mjs
+
+      - name: Check tag matches package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Tag $TAG does not match package.json version $PKG"
+            exit 1
+          fi
+          echo "OK: tag and package.json version match ($PKG)"
+
+  # Создаём GitHub Release с автогенерированными release notes из коммитов.
+  github-release:
+    name: Create GitHub Release
+    needs: preflight
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+  # Публикация в npm — отдельный шаг, требует NPM_TOKEN.
+  # Использует provenance для подтверждения происхождения пакета
+  # (npm attestation, см. https://docs.npmjs.com/generating-provenance-statements).
+  npm-publish:
+    name: Publish to npm
+    needs: preflight
+    runs-on: ubuntu-latest
+    # Требуем id-token для provenance; contents read для checkout.
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # npm publish с --provenance даёт криптографическую гарантию того,
+      # что пакет был собран именно из этого репозитория, этой версии
+      # GitHub Actions, в этом workflow.
+      # Это противоположность ситуации с ruflo, где npm-пакеты можно было
+      # подменить локально перед публикацией.
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public

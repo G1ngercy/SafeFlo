@@ -1,0 +1,67 @@
+{
+  "name": "safeflow",
+  "version": "0.1.0",
+  "description": "Безопасная платформа оркестрации AI-агентов для Claude Code. Локальная, прозрачная, без скрытых сетевых вызовов.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "safeflow": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test test/",
+    "start": "node dist/cli.js",
+    "mcp": "node dist/mcp/server.js",
+    "uninstall-data": "node dist/cli.js uninstall",
+    "audit:mcp": "node scripts/audit-mcp-descriptions.mjs",
+    "audit:all": "node scripts/audit-all.mjs",
+    "prepublishOnly": "npm run build && npm test && npm run audit:all"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.4",
+    "better-sqlite3": "11.3.0",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "7.6.11",
+    "@types/node": "22.7.4",
+    "typescript": "5.6.2"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "orchestration",
+    "local-first",
+    "secure",
+    "memory",
+    "task-planner"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR-ORG/safeflow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YOUR-ORG/safeflow/issues"
+  },
+  "homepage": "https://github.com/YOUR-ORG/safeflow#readme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "//security": "Этот пакет НЕ имеет preinstall/postinstall/install скриптов. Установка только распаковывает файлы. Все зависимости — с фиксированными версиями (без ^ или ~). Никаких сетевых вызовов при установке."
+}
