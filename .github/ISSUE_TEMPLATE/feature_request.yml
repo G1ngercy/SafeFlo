@@ -1,0 +1,50 @@
+name: Feature request
+description: Предложить новую функцию или улучшение
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо за предложение!
+
+        Заметка от мейнтейнеров: SafeFlow намеренно держит небольшую
+        поверхность функционала. Мы предпочитаем хорошо делать 5 вещей,
+        чем плохо делать 50. Предложения, увеличивающие сложность
+        или поверхность атаки, могут быть отклонены — это не значит,
+        что идея плохая, просто она может не подходить этому проекту.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую проблему вы пытаетесь решить?
+      description: Опишите ситуацию, в которой вам не хватает функциональности.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Предлагаемое решение
+      description: Как бы вы хотели, чтобы это работало?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативы, которые вы рассмотрели
+      description: |
+        Какие другие подходы вы пробовали или обдумывали?
+        Можно ли решить проблему текущими средствами SafeFlow?
+
+  - type: checkboxes
+    id: security
+    attributes:
+      label: Соображения безопасности
+      description: Отметьте, что относится к вашему предложению.
+      options:
+        - label: Эта функция не требует сетевых вызовов
+        - label: Эта функция не требует чтения/записи вне директории проекта
+        - label: Эта функция не требует добавления новых зависимостей
+        - label: Я готов сделать pull request, если предложение примут

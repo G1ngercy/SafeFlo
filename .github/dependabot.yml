@@ -1,0 +1,39 @@
+# Dependabot отслеживает уязвимости и обновления зависимостей.
+# Ключевые решения:
+#   - проверки еженедельно, не ежедневно (меньше шума);
+#   - обновления выходят как PR, не авто-merge — мейнтейнер должен явно
+#     подтвердить каждое обновление, посмотрев changelog;
+#   - npm и github-actions отслеживаются отдельно.
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    # Дополнительная защита: dependabot не будет менять major-версии
+    # автоматически. Major-обновления требуют осознанного ручного решения.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    labels:
+      - "dependencies"
+      - "security-review-needed"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
