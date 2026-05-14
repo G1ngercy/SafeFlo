@@ -1,5 +1,5 @@
 name: Bug report
-description: Сообщить о проблеме в SafeFlow
+description: Сообщить о проблеме в SafeFlo
 title: "[Bug]: "
 labels: ["bug", "needs-triage"]
 body:
@@ -37,7 +37,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Версия SafeFlow
+      label: Версия SafeFlo
       description: Из `package.json` или вывода `safeflow --version`
       placeholder: "0.1.0"
     validations:
