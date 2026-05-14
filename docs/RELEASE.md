@@ -35,10 +35,10 @@
 В конце файла обновите ссылки:
 
 ```diff
--[Unreleased]: https://github.com/YOUR-ORG/safeflow/compare/v0.1.0...HEAD
-+[Unreleased]: https://github.com/YOUR-ORG/safeflow/compare/v0.2.0...HEAD
-+[0.2.0]: https://github.com/YOUR-ORG/safeflow/compare/v0.1.0...v0.2.0
- [0.1.0]: https://github.com/YOUR-ORG/safeflow/releases/tag/v0.1.0
+-[Unreleased]: https://github.com/G1ngercy/SafeFlo/compare/v0.1.0...HEAD
++[Unreleased]: https://github.com/G1ngercy/SafeFlo/compare/v0.2.0...HEAD
++[0.2.0]: https://github.com/G1ngercy/SafeFlo/compare/v0.1.0...v0.2.0
+ [0.1.0]: https://github.com/G1ngercy/SafeFlo/releases/tag/v0.1.0
 ```
 
 ### 3. Обновление версии
@@ -89,7 +89,7 @@ git push origin v0.2.0
 - [ ] Проверьте на https://www.npmjs.com/package/safeflow, что новая версия видна.
 - [ ] Проверьте, что у пакета есть бейдж "Verified" (это означает успешный provenance).
 - [ ] Установите свежую версию в чистом проекте и убедитесь, что `npx safeflow init` работает.
-- [ ] Проверьте, что GitHub Release виден на https://github.com/YOUR-ORG/safeflow/releases.
+- [ ] Проверьте, что GitHub Release виден на https://github.com/G1ngercy/SafeFlo/releases.
 
 ## Что делать, если релиз сломан
 
@@ -104,6 +104,6 @@ git push origin v0.2.0
 
 Для работы release workflow в GitHub Actions нужен секрет:
 
-- `NPM_TOKEN` — токен с правами публикации в npm. Создаётся на https://www.npmjs.com/settings/YOUR-USERNAME/tokens. Тип: **Automation** (с двухфакторной защитой).
+- `NPM_TOKEN` — токен с правами публикации в npm. Создаётся на https://www.npmjs.com/settings/G1ngercy/tokens. Тип: **Automation** (с двухфакторной защитой).
 
 Никогда не храните токены локально в `.npmrc` — используйте только GitHub secrets. Когда меняете токен, ротируйте его сразу же.
