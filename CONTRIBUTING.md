@@ -64,7 +64,7 @@
 ## Среда разработки
 
 ```bash
-git clone https://github.com/YOUR-ORG/safeflow.git
+git clone https://github.com/G1ngercy/SafeFlo.git
 cd safeflow
 
 # Используем npm ci, а не npm install — он строго следует package-lock.json

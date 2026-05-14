@@ -1,6 +1,6 @@
 # SafeFlow
 
-[![CI](https://github.com/YOUR-ORG/safeflow/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-ORG/safeflow/actions/workflows/ci.yml)
+[![CI](https://github.com/G1ngercy/SafeFlo/actions/workflows/ci.yml/badge.svg)](https://github.com/G1ngercy/SafeFlo/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
 [![No install scripts](https://img.shields.io/badge/install_scripts-none-blue.svg)](SECURITY.md)
@@ -41,7 +41,7 @@ MCP-сервер с инструментами для долговременно
 
 ```bash
 # Клонируйте репозиторий — никаких curl | bash установщиков.
-git clone https://github.com/YOUR-ORG/safeflow.git
+git clone https://github.com/G1ngercy/SafeFlo.git
 cd safeflow
 
 # npm ci строго следует package-lock.json — никаких подмен версий.

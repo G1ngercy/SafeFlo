@@ -1,12 +1,12 @@
 blank_issues_enabled: false
 contact_links:
   - name: 🔒 Security vulnerability
-    url: https://github.com/YOUR-ORG/safeflow/security/advisories/new
+    url: https://github.com/G1ngercy/SafeFlo/security/advisories/new
     about: |
       Сообщения о уязвимостях НЕ открывайте как публичные issue.
       Используйте приватный security advisory.
   - name: 💬 Questions and discussions
-    url: https://github.com/YOUR-ORG/safeflow/discussions
+    url: https://github.com/G1ngercy/SafeFlo/discussions
     about: |
       Вопросы по использованию, идеи для обсуждения — в GitHub Discussions,
       а не в issues.

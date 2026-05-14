@@ -32,5 +32,5 @@
 - Нет модификации файлов вне директории проекта.
 - Все данные хранятся в `./.safeflow/` и полностью удаляются командой `uninstall --yes`.
 
-[Unreleased]: https://github.com/YOUR-ORG/safeflow/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/YOUR-ORG/safeflow/releases/tag/v0.1.0
+[Unreleased]: https://github.com/G1ngercy/SafeFlo/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/G1ngercy/SafeFlo/releases/tag/v0.1.0

@@ -52,12 +52,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/YOUR-ORG/safeflow.git"
+    "url": "git+https://github.com/G1ngercy/SafeFlo.git"
   },
   "bugs": {
-    "url": "https://github.com/YOUR-ORG/safeflow/issues"
+    "url": "https://github.com/G1ngercy/SafeFlo/issues"
   },
-  "homepage": "https://github.com/YOUR-ORG/safeflow#readme",
+  "homepage": "https://github.com/G1ngercy/SafeFlo#readme",
   "license": "MIT",
   "publishConfig": {
     "access": "public",
