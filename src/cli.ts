@@ -1,11 +1,11 @@
 /**
- * CLI для SafeFlow.
+ * CLI для SafeFlo.
  *
  * Команды:
  *   - `init`        — создаёт `.safeflow/` в текущей директории и пример конфига.
  *                     НЕ модифицирует никакие файлы вне текущей директории.
  *                     НЕ модифицирует ~/.claude/CLAUDE.md и подобные глобальные файлы.
- *   - `uninstall`   — удаляет ВСЕ артефакты SafeFlow из проекта (`.safeflow/`,
+ *   - `uninstall`   — удаляет ВСЕ артефакты SafeFlo из проекта (`.safeflow/`,
  *                     `.claude/commands/safeflow-*`). Никаких хвостов.
  *   - `status`      — показывает состояние локальных БД и аудит-лога.
  *   - `mcp`         — запускает MCP-сервер (используется через Claude Code).
@@ -40,7 +40,7 @@ function cmdInit(): void {
   const root = projectRoot();
   const safeflowDir = path.join(root, SAFEFLOW_DIR);
   if (fs.existsSync(safeflowDir)) {
-    console.log(`SafeFlow уже инициализирован в ${root}`);
+    console.log(`SafeFlo уже инициализирован в ${root}`);
     console.log("Содержимое:");
     for (const f of fs.readdirSync(safeflowDir)) {
       console.log("  ." + path.sep + path.join(SAFEFLOW_DIR, f));
@@ -53,17 +53,17 @@ function cmdInit(): void {
   fs.writeFileSync(
     path.join(safeflowDir, "README.txt"),
     [
-      "Эта директория создана SafeFlow.",
-      "Все данные SafeFlow (память, планы, агенты, аудит-лог) хранятся здесь.",
+      "Эта директория создана SafeFlo.",
+      "Все данные SafeFlo (память, планы, агенты, аудит-лог) хранятся здесь.",
       "",
-      "Чтобы полностью удалить SafeFlow из проекта:",
+      "Чтобы полностью удалить SafeFlo из проекта:",
       "  npx safeflow uninstall",
       "",
       "Или вручную:",
       "  rm -rf .safeflow",
       "  rm -rf .claude/commands/safeflow-*",
       "",
-      "SafeFlow не модифицирует никаких файлов вне директории проекта.",
+      "SafeFlo не модифицирует никаких файлов вне директории проекта.",
     ].join("\n"),
     { mode: 0o600 },
   );
@@ -84,7 +84,7 @@ function cmdInit(): void {
     outcome: "ok",
   });
 
-  console.log("SafeFlow инициализирован.");
+  console.log("SafeFlo инициализирован.");
   console.log("");
   console.log("Что создано:");
   console.log(`  ${SAFEFLOW_DIR}/                  — данные (SQLite, audit)`);
@@ -110,7 +110,7 @@ function cmdUninstall(force = false): void {
   }
 
   if (toRemove.length === 0) {
-    console.log("SafeFlow артефактов не найдено. Нечего удалять.");
+    console.log("SafeFlo артефактов не найдено. Нечего удалять.");
     return;
   }
 
@@ -130,9 +130,9 @@ function cmdUninstall(force = false): void {
       fs.unlinkSync(p);
     }
   }
-  console.log("SafeFlow полностью удалён из проекта.");
+  console.log("SafeFlo полностью удалён из проекта.");
   console.log(
-    "SafeFlow не использует глобальных путей; никаких файлов вне проекта не было.",
+    "SafeFlo не использует глобальных путей; никаких файлов вне проекта не было.",
   );
 }
 
@@ -140,11 +140,11 @@ function cmdStatus(): void {
   const root = projectRoot();
   const safeflowDir = path.join(root, SAFEFLOW_DIR);
   if (!fs.existsSync(safeflowDir)) {
-    console.log("SafeFlow не инициализирован. Запустите: npx safeflow init");
+    console.log("SafeFlo не инициализирован. Запустите: npx safeflow init");
     return;
   }
   console.log(`Проект: ${root}`);
-  console.log(`SafeFlow директория: ${safeflowDir}`);
+  console.log(`SafeFlo директория: ${safeflowDir}`);
   console.log("");
   console.log("Файлы:");
   for (const f of fs.readdirSync(safeflowDir)) {
@@ -176,7 +176,7 @@ function slashCommandFiles(): Record<string, string> {
     "commands/safeflow-plan.md": [
       "# /safeflow-plan",
       "",
-      "Создать или обновить план задачи, используя MCP-инструменты SafeFlow.",
+      "Создать или обновить план задачи, используя MCP-инструменты SafeFlo.",
       "",
       "## Использование",
       "",
@@ -191,7 +191,7 @@ function slashCommandFiles(): Record<string, string> {
     "commands/safeflow-memory.md": [
       "# /safeflow-memory",
       "",
-      "Работа с локальной памятью проекта через MCP-инструменты SafeFlow.",
+      "Работа с локальной памятью проекта через MCP-инструменты SafeFlo.",
       "",
       "## Доступные операции",
       "",
@@ -207,7 +207,7 @@ function slashCommandFiles(): Record<string, string> {
     "commands/safeflow-agents.md": [
       "# /safeflow-agents",
       "",
-      "Координация подзадач через логических агентов SafeFlow.",
+      "Координация подзадач через логических агентов SafeFlo.",
       "",
       "## Использование",
       "",
@@ -223,20 +223,20 @@ function slashCommandFiles(): Record<string, string> {
 }
 
 function help(): void {
-  console.log("SafeFlow — безопасная локальная платформа оркестрации агентов.");
+  console.log("SafeFlo — безопасная локальная платформа оркестрации агентов.");
   console.log("");
   console.log("Использование: safeflow <команда> [опции]");
   console.log("");
   console.log("Команды:");
-  console.log("  init           инициализировать SafeFlow в текущем проекте");
+  console.log("  init           инициализировать SafeFlo в текущем проекте");
   console.log("  status         показать состояние локальных данных");
   console.log("  mcp            запустить MCP-сервер (stdio)");
-  console.log("  uninstall      удалить все артефакты SafeFlow из проекта");
+  console.log("  uninstall      удалить все артефакты SafeFlo из проекта");
   console.log("    --yes        подтвердить удаление");
   console.log("  help           показать эту справку");
   console.log("");
   console.log(
-    "SafeFlow никогда не модифицирует файлы вне директории текущего проекта.",
+    "SafeFlo никогда не модифицирует файлы вне директории текущего проекта.",
   );
 }
 

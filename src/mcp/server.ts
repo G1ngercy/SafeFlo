@@ -1,5 +1,5 @@
 /**
- * MCP server для SafeFlow.
+ * MCP server для SafeFlo.
  *
  * ВАЖНО ОТНОСИТЕЛЬНО БЕЗОПАСНОСТИ:
  * Описания инструментов (`description`) — это то, что LLM видит как

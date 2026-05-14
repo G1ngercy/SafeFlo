@@ -1,4 +1,4 @@
-# SafeFlow
+# SafeFlo
 
 [![CI](https://github.com/G1ngercy/SafeFlo/actions/workflows/ci.yml/badge.svg)](https://github.com/G1ngercy/SafeFlo/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -136,7 +136,7 @@ This removes:
 - `./.safeflow/` — all local databases and audit log
 - `./.claude/commands/safeflow-*.md`
 
-SafeFlow uses no global paths whatsoever, so there is nothing to clean up outside the project. **Genuinely nothing.** Verify for yourself: `grep -rn "homedir\|os\.home" src/` returns no results.
+SafeFlo uses no global paths whatsoever, so there is nothing to clean up outside the project. **Genuinely nothing.** Verify for yourself: `grep -rn "homedir\|os\.home" src/` returns no results.
 
 ## Security
 
@@ -156,9 +156,9 @@ Vulnerabilities — through private security advisory, **not** through public is
 
 ## Comparison with similar projects
 
-SafeFlow is designed as a secure alternative to functionally similar projects. The main architectural differences:
+SafeFlo is designed as a secure alternative to functionally similar projects. The main architectural differences:
 
-| Aspect | Problematic projects | SafeFlow |
+| Aspect | Problematic projects | SafeFlo |
 |---|---|---|
 | Installation | `curl ... \| bash` from a CDN | `git clone` + `npm ci` with pinned versions |
 | Install scripts | `preinstall`, `postinstall` | None, CI verifies |
