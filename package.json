@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "node --test test/",
+    "test": "node --test \"test/*.test.js\"",
     "start": "node dist/cli.js",
     "mcp": "node dist/mcp/server.js",
     "uninstall-data": "node dist/cli.js uninstall",

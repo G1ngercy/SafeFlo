@@ -40,8 +40,9 @@ test("safeResolve: разрешает '....' как обычное имя", () =
   // Проверяем именно это поведение — оно гарантирует, что наша защита
   // не имеет ложно-отрицательных случаев из-за неверной нормализации.
   const r = safeResolve(TMP, "....//etc/passwd");
-  // Результат должен быть внутри TMP.
-  assert.ok(r.startsWith(TMP + "/") || r === TMP);
+  // Результат должен быть внутри TMP. Используем path.sep для совместимости
+  // с Windows, где разделитель — `\`.
+  assert.ok(r.startsWith(TMP + path.sep) || r === TMP);
 });
 
 test("safeResolve: блокирует комбинации '..' с подкаталогами", () => {
@@ -62,7 +63,9 @@ test("safeResolve: блокирует null-байты", () => {
 
 test("safeResolve: разрешает вложенные относительные сегменты", () => {
   const r = safeResolve(TMP, "a/./b/../c.txt");
-  assert.equal(path.relative(TMP, r), "a/c.txt");
+  // path.relative возвращает путь с разделителями ОС: на Windows это `a\c.txt`,
+  // на Unix — `a/c.txt`. Используем path.join для построения ожидаемого значения.
+  assert.equal(path.relative(TMP, r), path.join("a", "c.txt"));
 });
 
 test("safeResolve: блокирует множественные ..", () => {
