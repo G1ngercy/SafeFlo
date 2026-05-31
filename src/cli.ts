@@ -23,6 +23,7 @@ import process from "node:process";
 import { spawn } from "node:child_process";
 
 import { AuditLogger } from "./audit/logger.js";
+import { backfillEmbeddings } from "./cli/commands/backfill.js";
 
 const SAFEFLOW_DIR = ".safeflow";
 const CLAUDE_LOCAL_DIR = ".claude";
@@ -222,6 +223,29 @@ function slashCommandFiles(): Record<string, string> {
   };
 }
 
+async function cmdBackfill(args: string[]): Promise<void> {
+  const root = projectRoot();
+  const nsArg = args.find((a) => a.startsWith("--namespace="));
+  const namespace = nsArg ? nsArg.slice("--namespace=".length) : undefined;
+  const dryRun = args.includes("--dry-run");
+
+  if (!dryRun) {
+    console.error(
+      "[backfill] Внимание: при первом запуске будет однократно скачана модель",
+    );
+    console.error(
+      "[backfill] эмбеддингов (~120MB) в .safeflow/models/. Прервите (Ctrl+C),",
+    );
+    console.error("[backfill] если это нежелательно.");
+  }
+
+  const res = await backfillEmbeddings(root, { namespace, dryRun });
+  console.log(
+    `backfill: pending=${res.pending}, embedded=${res.embedded}` +
+      (dryRun ? " (dry-run)" : ""),
+  );
+}
+
 function help(): void {
   console.log("SafeFlo — безопасная локальная платформа оркестрации агентов.");
   console.log("");
@@ -233,6 +257,11 @@ function help(): void {
   console.log("  mcp            запустить MCP-сервер (stdio)");
   console.log("  uninstall      удалить все артефакты SafeFlo из проекта");
   console.log("    --yes        подтвердить удаление");
+  console.log(
+    "  backfill-embeddings  досчитать векторы для записей без эмбеддинга",
+  );
+  console.log("    --namespace=X  ограничить namespace");
+  console.log("    --dry-run      только показать количество, без загрузки модели");
   console.log("  help           показать эту справку");
   console.log("");
   console.log(
@@ -255,6 +284,14 @@ switch (cmd) {
     break;
   case "uninstall":
     cmdUninstall(args.includes("--yes") || args.includes("-y"));
+    break;
+  case "backfill-embeddings":
+    cmdBackfill(args).catch((err) => {
+      console.error(
+        `backfill failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      process.exit(1);
+    });
     break;
   case "help":
   case "--help":

@@ -22,7 +22,7 @@ test("planner: создание плана и шагов", () => {
     description: "Таблицы users, sessions",
     dependsOn: [],
   });
-  const s2 = p.addStep(plan.id, {
+  p.addStep(plan.id, {
     title: "Реализовать endpoints",
     description: "POST /login, POST /logout",
     dependsOn: [s1.id],

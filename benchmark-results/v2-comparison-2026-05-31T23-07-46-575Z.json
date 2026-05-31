@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-05-31T23:07:46.575Z",
+  "model": "Xenova/paraphrase-multilingual-MiniLM-L12-v2",
+  "cases": 6,
+  "summary": [
+    {
+      "type": "lexical",
+      "n": 6,
+      "v1": {
+        "recall5": 1,
+        "recall10": 1,
+        "mrr": 1
+      },
+      "v2": {
+        "recall5": 1,
+        "recall10": 1,
+        "mrr": 1
+      }
+    },
+    {
+      "type": "synonym",
+      "n": 9,
+      "v1": {
+        "recall5": 0.4444444444444444,
+        "recall10": 0.4444444444444444,
+        "mrr": 0.3333333333333333
+      },
+      "v2": {
+        "recall5": 1,
+        "recall10": 1,
+        "mrr": 0.8611111111111112
+      }
+    },
+    {
+      "type": "concept",
+      "n": 7,
+      "v1": {
+        "recall5": 0.5714285714285714,
+        "recall10": 0.5714285714285714,
+        "mrr": 0.5714285714285714
+      },
+      "v2": {
+        "recall5": 1,
+        "recall10": 1,
+        "mrr": 0.75
+      }
+    }
+  ]
+}

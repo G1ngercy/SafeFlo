@@ -1,6 +1,6 @@
 {
   "name": "safeflow",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "Безопасная платформа оркестрации AI-агентов для Claude Code. Локальная, прозрачная, без скрытых сетевых вызовов.",
   "type": "module",
   "main": "dist/index.js",
@@ -17,9 +17,12 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "node --test test/memory.test.js test/planner.test.js test/security.paths.test.js test/security.validation.test.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "node --test test/memory.test.js test/migrations.test.js test/hybrid.test.js test/lifecycle.test.js test/consolidation.test.js test/planner.test.js test/security.paths.test.js test/security.validation.test.js",
     "start": "node dist/cli.js",
     "mcp": "node dist/mcp/server.js",
+    "bench": "tsx test/benchmark/run.ts",
     "uninstall-data": "node dist/cli.js uninstall",
     "audit:mcp": "node scripts/audit-mcp-descriptions.mjs",
     "audit:all": "node scripts/audit-all.mjs",
@@ -30,13 +33,24 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
+    "@xenova/transformers": "2.17.2",
     "better-sqlite3": "12.10.0",
+    "sqlite-vec": "0.1.9",
     "zod": "3.25.76"
   },
+  "overrides": {
+    "protobufjs": "^7.6.2",
+    "qs": "^6.14.0"
+  },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@types/better-sqlite3": "7.6.13",
     "@types/node": "22.7.4",
-    "typescript": "5.6.2"
+    "eslint": "10.4.1",
+    "globals": "17.6.0",
+    "tsx": "4.22.4",
+    "typescript": "5.6.2",
+    "typescript-eslint": "8.60.0"
   },
   "keywords": [
     "claude",

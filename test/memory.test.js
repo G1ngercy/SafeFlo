@@ -11,12 +11,12 @@ function mkTmp() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "safeflow-mem-"));
 }
 
-test("memory: store/get round-trip", () => {
+test("memory: store/get round-trip", async () => {
   const root = mkTmp();
   const audit = new AuditLogger(root);
   const m = new MemoryStore(root, audit);
 
-  m.store("project.notes", "design", "Use SQLite, FTS5", { tag: "arch" });
+  await m.store("project.notes", "design", "Use SQLite, FTS5", { tag: "arch" });
   const r = m.get("project.notes", "design");
   assert.ok(r);
   assert.equal(r.content, "Use SQLite, FTS5");
@@ -24,25 +24,25 @@ test("memory: store/get round-trip", () => {
   m.close();
 });
 
-test("memory: update overwrites", () => {
+test("memory: update overwrites", async () => {
   const root = mkTmp();
   const audit = new AuditLogger(root);
   const m = new MemoryStore(root, audit);
 
-  m.store("ns", "k", "v1");
-  m.store("ns", "k", "v2");
+  await m.store("ns", "k", "v1");
+  await m.store("ns", "k", "v2");
   assert.equal(m.get("ns", "k")?.content, "v2");
   m.close();
 });
 
-test("memory: search returns relevant", () => {
+test("memory: search returns relevant", async () => {
   const root = mkTmp();
   const audit = new AuditLogger(root);
   const m = new MemoryStore(root, audit);
 
-  m.store("notes", "a", "the quick brown fox jumps over the lazy dog");
-  m.store("notes", "b", "lorem ipsum dolor sit amet consectetur");
-  m.store("notes", "c", "fox and hound are friends");
+  await m.store("notes", "a", "the quick brown fox jumps over the lazy dog");
+  await m.store("notes", "b", "lorem ipsum dolor sit amet consectetur");
+  await m.store("notes", "c", "fox and hound are friends");
 
   const res = m.search("notes", "fox", 10);
   const keys = res.map((r) => r.key).sort();
@@ -50,22 +50,22 @@ test("memory: search returns relevant", () => {
   m.close();
 });
 
-test("memory: invalid namespace throws", () => {
+test("memory: invalid namespace rejects", async () => {
   const root = mkTmp();
   const audit = new AuditLogger(root);
   const m = new MemoryStore(root, audit);
 
-  assert.throws(() => m.store("bad ns!", "k", "v"));
-  assert.throws(() => m.store("ns; DROP TABLE", "k", "v"));
+  await assert.rejects(() => m.store("bad ns!", "k", "v"));
+  await assert.rejects(() => m.store("ns; DROP TABLE", "k", "v"));
   m.close();
 });
 
-test("memory: SQL injection в search обрабатывается безопасно", () => {
+test("memory: SQL injection в search обрабатывается безопасно", async () => {
   const root = mkTmp();
   const audit = new AuditLogger(root);
   const m = new MemoryStore(root, audit);
 
-  m.store("ns", "k1", "hello world");
+  await m.store("ns", "k1", "hello world");
   // Попытка SQL-инъекции через query — должна просто ничего не вернуть
   // или искать литерально (но не выполнять SQL).
   const res = m.search("ns", "'; DROP TABLE memory; --", 10);

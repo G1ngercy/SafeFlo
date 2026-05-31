@@ -55,7 +55,7 @@ async function main(): Promise<void> {
   });
 
   const server = new Server(
-    { name: "safeflow", version: "0.1.0" },
+    { name: "safeflow", version: "2.0.0" },
     { capabilities: { tools: {} } },
   );
 
@@ -64,7 +64,7 @@ async function main(): Promise<void> {
       {
         name: "memory_store",
         description:
-          "Save a value in local SQLite memory at the given namespace and key. Updates the value if the key already exists. Data is stored only in the project's .safeflow/ directory.",
+          "Save a value in local SQLite memory at the given namespace and key. Updates the value if the key already exists. Optional lifecycle fields: memory_type, importance, source. Data is stored only in the project's .safeflow/ directory.",
         inputSchema: {
           type: "object",
           properties: {
@@ -75,6 +75,23 @@ async function main(): Promise<void> {
               type: "object",
               description: "Optional JSON metadata.",
               additionalProperties: true,
+            },
+            memory_type: {
+              type: "string",
+              enum: ["episodic", "semantic", "procedural"],
+              description:
+                "Lifecycle type. Defaults to 'episodic' when omitted.",
+            },
+            importance: {
+              type: "number",
+              minimum: 0,
+              maximum: 1,
+              description:
+                "Optional importance in [0,1]. Defaults to a content-derived heuristic.",
+            },
+            source: {
+              type: "string",
+              description: "Optional provenance string.",
             },
           },
           required: ["namespace", "key", "content"],
@@ -94,9 +111,36 @@ async function main(): Promise<void> {
         },
       },
       {
+        name: "memory_recall",
+        description:
+          "Hybrid recall within a namespace: FTS5 lexical search combined with vector semantic search via Reciprocal Rank Fusion, with importance and recency boosts. Falls back to FTS5-only when no embedding model is present. Returns scored records. Superseded records are excluded unless include_superseded is true.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            namespace: { type: "string" },
+            query: { type: "string", description: "Free-text query." },
+            limit: { type: "number", minimum: 1, maximum: 100, default: 10 },
+            memory_types: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: ["episodic", "semantic", "procedural"],
+              },
+              description: "Optional filter by memory type.",
+            },
+            include_superseded: {
+              type: "boolean",
+              default: false,
+              description: "Include records that have been superseded.",
+            },
+          },
+          required: ["namespace", "query"],
+        },
+      },
+      {
         name: "memory_search",
         description:
-          "Full-text search within a namespace using SQLite FTS5. Returns ranked records.",
+          "[DEPRECATED, use memory_recall] Full-text search within a namespace using SQLite FTS5. Returns ranked records.",
         inputSchema: {
           type: "object",
           properties: {
@@ -131,6 +175,44 @@ async function main(): Promise<void> {
             key: { type: "string" },
           },
           required: ["namespace", "key"],
+        },
+      },
+      {
+        name: "memory_supersede",
+        description:
+          "Replace an outdated memory record with new content. Creates a new record and marks the old one as superseded (kept for history, excluded from recall by default). Returns the new record id.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            old_id: {
+              type: "number",
+              description: "Row id of the record being replaced.",
+            },
+            new_content: { type: "string", description: "Replacement content." },
+            reason: {
+              type: "string",
+              description: "Why the old record is being superseded.",
+            },
+          },
+          required: ["old_id", "new_content", "reason"],
+        },
+      },
+      {
+        name: "memory_consolidate",
+        description:
+          "Find clusters of similar episodic records that are candidates for summarization into a semantic record. Read-only: returns clusters with sample contents and a centroid. The server performs no summarization and no network calls; the client decides what to summarize and stores it separately.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            namespace: { type: "string" },
+            dry_run: {
+              type: "boolean",
+              default: true,
+              description:
+                "Reserved flag; the server only ever returns candidates.",
+            },
+          },
+          required: ["namespace"],
         },
       },
       {
@@ -269,17 +351,60 @@ async function main(): Promise<void> {
       try {
         switch (name) {
           case "memory_store": {
-            const rec = memory.store(
+            const rec = await memory.store(
               String(args.namespace),
               String(args.key),
               String(args.content),
               (args.metadata as Record<string, unknown>) ?? {},
+              {
+                memoryType: args.memory_type as
+                  | "episodic"
+                  | "semantic"
+                  | "procedural"
+                  | undefined,
+                importance:
+                  typeof args.importance === "number"
+                    ? args.importance
+                    : undefined,
+                source: args.source != null ? String(args.source) : undefined,
+              },
             );
             return jsonResult(rec);
+          }
+          case "memory_supersede": {
+            const newId = await memory.supersede(
+              Number(args.old_id),
+              String(args.new_content),
+              String(args.reason),
+            );
+            return jsonResult({ newId });
+          }
+          case "memory_consolidate": {
+            const result = memory.consolidate(
+              String(args.namespace),
+              args.dry_run !== false,
+            );
+            return jsonResult(result);
           }
           case "memory_get": {
             const rec = memory.get(String(args.namespace), String(args.key));
             return jsonResult(rec);
+          }
+          case "memory_recall": {
+            const results = await memory.recall({
+              namespace: String(args.namespace),
+              query: String(args.query),
+              limit: typeof args.limit === "number" ? args.limit : 10,
+              memoryTypes: Array.isArray(args.memory_types)
+                ? (args.memory_types as (
+                    | "episodic"
+                    | "semantic"
+                    | "procedural"
+                  )[])
+                : undefined,
+              includeSuperseded: args.include_superseded === true,
+            });
+            return jsonResult(results);
           }
           case "memory_search": {
             const results = memory.search(
