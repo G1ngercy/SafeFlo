@@ -55,7 +55,7 @@ async function main(): Promise<void> {
   });
 
   const server = new Server(
-    { name: "safeflow", version: "0.1.0" },
+    { name: "safeflow", version: "2.0.0" },
     { capabilities: { tools: {} } },
   );
 
