@@ -27,6 +27,11 @@ import { safeResolve } from "../security/paths.js";
 import { AuditLogger } from "../audit/logger.js";
 import { migrate, ensureVecLoaded } from "../storage/migrations.js";
 import { EmbeddingService } from "./embedding.js";
+import {
+  HybridSearch,
+  type ScoredMemory,
+  type SearchOptions,
+} from "./hybrid-search.js";
 
 export interface MemoryRecord {
   namespace: string;
@@ -45,6 +50,7 @@ export class MemoryStore {
   private readonly db: Database.Database;
   private readonly audit: AuditLogger;
   private readonly embeddings: EmbeddingService;
+  private readonly hybrid: HybridSearch;
 
   constructor(projectRoot: string, audit: AuditLogger) {
     const dbDir = safeResolve(projectRoot, ".safeflow");
@@ -58,6 +64,7 @@ export class MemoryStore {
     this.audit = audit;
     // Конструирование НЕ скачивает модель — только готовит путь кэша.
     this.embeddings = new EmbeddingService(dbDir);
+    this.hybrid = new HybridSearch(this.db, this.embeddings);
 
     // Загружаем sqlite-vec ДО миграций (v2 создаёт vec0-таблицу) и до любых
     // векторных запросов в runtime.
@@ -287,7 +294,32 @@ export class MemoryStore {
   }
 
   /**
-   * Полнотекстовый поиск через FTS5. Используем bm25 — встроенный ранкер.
+   * Гибридный recall: FTS5 + векторы (sqlite-vec), объединённые через RRF,
+   * с recency- и importance-бустами. Деградирует к FTS-only без модели.
+   *
+   * Это рекомендованный способ поиска в памяти (см. deprecated search()).
+   */
+  async recall(opts: SearchOptions): Promise<ScoredMemory[]> {
+    MemoryNamespace.parse(opts.namespace);
+    const results = await this.hybrid.search(opts);
+    this.audit.log({
+      source: "memory",
+      action: "recall",
+      payload: {
+        namespace: opts.namespace,
+        queryLength: opts.query.length,
+        returned: results.length,
+      },
+      outcome: "ok",
+    });
+    return results;
+  }
+
+  /**
+   * @deprecated Используй recall() — гибридный поиск (FTS5 + векторы, RRF).
+   *
+   * Полнотекстовый поиск через FTS5 (bm25). Сохранён без изменений ради
+   * обратной совместимости и как baseline для бенчмарка v1 vs v2.
    * Запрос экранируется: пользовательский ввод никогда не попадает в SQL
    * напрямую, только через FTS-параметр.
    */

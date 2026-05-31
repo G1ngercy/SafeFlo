@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "node --test test/memory.test.js test/migrations.test.js test/planner.test.js test/security.paths.test.js test/security.validation.test.js",
+    "test": "node --test test/memory.test.js test/migrations.test.js test/hybrid.test.js test/planner.test.js test/security.paths.test.js test/security.validation.test.js",
     "start": "node dist/cli.js",
     "mcp": "node dist/mcp/server.js",
     "bench": "tsx test/benchmark/run.ts",
