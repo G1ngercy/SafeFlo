@@ -111,9 +111,36 @@ async function main(): Promise<void> {
         },
       },
       {
+        name: "memory_recall",
+        description:
+          "Hybrid recall within a namespace: FTS5 lexical search combined with vector semantic search via Reciprocal Rank Fusion, with importance and recency boosts. Falls back to FTS5-only when no embedding model is present. Returns scored records. Superseded records are excluded unless include_superseded is true.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            namespace: { type: "string" },
+            query: { type: "string", description: "Free-text query." },
+            limit: { type: "number", minimum: 1, maximum: 100, default: 10 },
+            memory_types: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: ["episodic", "semantic", "procedural"],
+              },
+              description: "Optional filter by memory type.",
+            },
+            include_superseded: {
+              type: "boolean",
+              default: false,
+              description: "Include records that have been superseded.",
+            },
+          },
+          required: ["namespace", "query"],
+        },
+      },
+      {
         name: "memory_search",
         description:
-          "Full-text search within a namespace using SQLite FTS5. Returns ranked records.",
+          "[DEPRECATED, use memory_recall] Full-text search within a namespace using SQLite FTS5. Returns ranked records.",
         inputSchema: {
           type: "object",
           properties: {
@@ -362,6 +389,22 @@ async function main(): Promise<void> {
           case "memory_get": {
             const rec = memory.get(String(args.namespace), String(args.key));
             return jsonResult(rec);
+          }
+          case "memory_recall": {
+            const results = await memory.recall({
+              namespace: String(args.namespace),
+              query: String(args.query),
+              limit: typeof args.limit === "number" ? args.limit : 10,
+              memoryTypes: Array.isArray(args.memory_types)
+                ? (args.memory_types as (
+                    | "episodic"
+                    | "semantic"
+                    | "procedural"
+                  )[])
+                : undefined,
+              includeSuperseded: args.include_superseded === true,
+            });
+            return jsonResult(results);
           }
           case "memory_search": {
             const results = memory.search(
