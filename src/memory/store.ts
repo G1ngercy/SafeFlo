@@ -25,6 +25,7 @@ import {
 } from "../security/validation.js";
 import { safeResolve } from "../security/paths.js";
 import { AuditLogger } from "../audit/logger.js";
+import { migrate, ensureVecLoaded } from "../storage/migrations.js";
 
 export interface MemoryRecord {
   namespace: string;
@@ -53,7 +54,14 @@ export class MemoryStore {
     this.db.pragma("journal_mode = WAL");
     this.db.pragma("foreign_keys = ON");
     this.audit = audit;
+
+    // Загружаем sqlite-vec ДО миграций (v2 создаёт vec0-таблицу) и до любых
+    // векторных запросов в runtime.
+    ensureVecLoaded(this.db);
+
+    // Базовая v1-схема (idempotent), затем версионные миграции с автобэкапом.
     this.initSchema();
+    migrate(this.db, dbPath);
   }
 
   private initSchema(): void {
