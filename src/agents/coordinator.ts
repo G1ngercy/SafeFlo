@@ -39,7 +39,7 @@ const AgentRole = z
   .string()
   .min(1)
   .max(64)
-  .regex(/^[a-zA-Z][a-zA-Z0-9_\-]*$/, "Роль: буквы, цифры, _, -");
+  .regex(/^[a-zA-Z][a-zA-Z0-9_-]*$/, "Роль: буквы, цифры, _, -");
 
 export interface Agent {
   id: string;

@@ -48,7 +48,7 @@ check("все версии зависимостей зафиксированы",
     ...(pkg.dependencies || {}),
     ...(pkg.devDependencies || {}),
   };
-  const loose = Object.entries(allDeps).filter(([_, v]) => /^[\^~]/.test(v));
+  const loose = Object.entries(allDeps).filter(([, v]) => /^[\^~]/.test(v));
   if (loose.length) {
     throw new Error(
       "Незафиксированные версии: " + loose.map(([k, v]) => `${k}@${v}`).join(", "),

@@ -116,6 +116,9 @@ export function safeFilename(name: string): string {
     throw new PathSecurityError(`Запрещённое имя файла: ${name}`);
   }
   // Запрещаем имена с управляющими символами.
+  // Контрол-символы (\x00–\x1f) здесь нужны намеренно: это и есть проверка,
+  // блокирующая null-байты и управляющие символы в имени файла.
+  // eslint-disable-next-line no-control-regex
   if (/[\x00-\x1f]/.test(name)) {
     throw new PathSecurityError(
       "Имя файла содержит управляющие символы",
