@@ -171,6 +171,24 @@ async function main(): Promise<void> {
         },
       },
       {
+        name: "memory_consolidate",
+        description:
+          "Find clusters of similar episodic records that are candidates for summarization into a semantic record. Read-only: returns clusters with sample contents and a centroid. The server performs no summarization and no network calls; the client decides what to summarize and stores it separately.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            namespace: { type: "string" },
+            dry_run: {
+              type: "boolean",
+              default: true,
+              description:
+                "Reserved flag; the server only ever returns candidates.",
+            },
+          },
+          required: ["namespace"],
+        },
+      },
+      {
         name: "plan_create",
         description: "Create a new empty task plan with a goal description.",
         inputSchema: {
@@ -333,6 +351,13 @@ async function main(): Promise<void> {
               String(args.reason),
             );
             return jsonResult({ newId });
+          }
+          case "memory_consolidate": {
+            const result = memory.consolidate(
+              String(args.namespace),
+              args.dry_run !== false,
+            );
+            return jsonResult(result);
           }
           case "memory_get": {
             const rec = memory.get(String(args.namespace), String(args.key));

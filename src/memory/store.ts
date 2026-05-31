@@ -33,6 +33,10 @@ import {
   type SearchOptions,
 } from "./hybrid-search.js";
 import { defaultImportance, type MemoryType } from "./importance.js";
+import {
+  findConsolidationCandidates,
+  type ConsolidationCluster,
+} from "./consolidation.js";
 
 export interface MemoryRecord {
   namespace: string;
@@ -110,7 +114,9 @@ export class MemoryStore {
         .prepare(
           "INSERT OR REPLACE INTO memory_vec(memory_id, embedding) VALUES (?, ?)",
         )
-        .run(rowId, Buffer.from(vec.buffer));
+        // sqlite-vec требует INTEGER первичный ключ как BigInt — обычный JS
+        // number трактуется как REAL и отвергается.
+        .run(BigInt(rowId), Buffer.from(vec.buffer));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.audit.log({
@@ -437,6 +443,27 @@ export class MemoryStore {
       outcome: "ok",
     });
     return results;
+  }
+
+  /**
+   * Находит кластеры близких эпизодических записей — кандидатов на обобщение
+   * в semantic-запись. Сервер НЕ делает LLM-вызовов: возвращает кластеры с
+   * samples, а решение о суммаризации принимает клиент (и сам вызывает store
+   * с memory_type='semantic'). Только чтение.
+   */
+  consolidate(
+    namespace: string,
+    dryRun = true,
+  ): { dryRun: boolean; clusters: ConsolidationCluster[] } {
+    const ns = MemoryNamespace.parse(namespace);
+    const clusters = findConsolidationCandidates(this.db, { namespace: ns });
+    this.audit.log({
+      source: "memory",
+      action: "consolidate",
+      payload: { namespace: ns, dryRun, clusters: clusters.length },
+      outcome: "ok",
+    });
+    return { dryRun, clusters };
   }
 
   /**

@@ -60,7 +60,8 @@ export async function backfillEmbeddings(
       const vecs = await embedSvc.embed(batch.map((r) => r.content));
       const tx = db.transaction(() => {
         for (let j = 0; j < batch.length; j++) {
-          insertVec.run(batch[j]!.id, Buffer.from(vecs[j]!.buffer));
+          // sqlite-vec требует INTEGER PK как BigInt (JS number = REAL).
+          insertVec.run(BigInt(batch[j]!.id), Buffer.from(vecs[j]!.buffer));
         }
       });
       tx();
