@@ -64,7 +64,7 @@ async function main(): Promise<void> {
       {
         name: "memory_store",
         description:
-          "Save a value in local SQLite memory at the given namespace and key. Updates the value if the key already exists. Data is stored only in the project's .safeflow/ directory.",
+          "Save a value in local SQLite memory at the given namespace and key. Updates the value if the key already exists. Optional lifecycle fields: memory_type, importance, source. Data is stored only in the project's .safeflow/ directory.",
         inputSchema: {
           type: "object",
           properties: {
@@ -75,6 +75,23 @@ async function main(): Promise<void> {
               type: "object",
               description: "Optional JSON metadata.",
               additionalProperties: true,
+            },
+            memory_type: {
+              type: "string",
+              enum: ["episodic", "semantic", "procedural"],
+              description:
+                "Lifecycle type. Defaults to 'episodic' when omitted.",
+            },
+            importance: {
+              type: "number",
+              minimum: 0,
+              maximum: 1,
+              description:
+                "Optional importance in [0,1]. Defaults to a content-derived heuristic.",
+            },
+            source: {
+              type: "string",
+              description: "Optional provenance string.",
             },
           },
           required: ["namespace", "key", "content"],
@@ -131,6 +148,26 @@ async function main(): Promise<void> {
             key: { type: "string" },
           },
           required: ["namespace", "key"],
+        },
+      },
+      {
+        name: "memory_supersede",
+        description:
+          "Replace an outdated memory record with new content. Creates a new record and marks the old one as superseded (kept for history, excluded from recall by default). Returns the new record id.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            old_id: {
+              type: "number",
+              description: "Row id of the record being replaced.",
+            },
+            new_content: { type: "string", description: "Replacement content." },
+            reason: {
+              type: "string",
+              description: "Why the old record is being superseded.",
+            },
+          },
+          required: ["old_id", "new_content", "reason"],
         },
       },
       {
@@ -274,8 +311,28 @@ async function main(): Promise<void> {
               String(args.key),
               String(args.content),
               (args.metadata as Record<string, unknown>) ?? {},
+              {
+                memoryType: args.memory_type as
+                  | "episodic"
+                  | "semantic"
+                  | "procedural"
+                  | undefined,
+                importance:
+                  typeof args.importance === "number"
+                    ? args.importance
+                    : undefined,
+                source: args.source != null ? String(args.source) : undefined,
+              },
             );
             return jsonResult(rec);
+          }
+          case "memory_supersede": {
+            const newId = await memory.supersede(
+              Number(args.old_id),
+              String(args.new_content),
+              String(args.reason),
+            );
+            return jsonResult({ newId });
           }
           case "memory_get": {
             const rec = memory.get(String(args.namespace), String(args.key));

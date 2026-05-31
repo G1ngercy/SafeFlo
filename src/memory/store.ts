@@ -32,6 +32,7 @@ import {
   type ScoredMemory,
   type SearchOptions,
 } from "./hybrid-search.js";
+import { defaultImportance, type MemoryType } from "./importance.js";
 
 export interface MemoryRecord {
   namespace: string;
@@ -44,6 +45,13 @@ export interface MemoryRecord {
 
 export interface SearchResult extends MemoryRecord {
   score: number;
+}
+
+/** Опциональные lifecycle-поля при записи. */
+export interface StoreOptions {
+  memoryType?: MemoryType;
+  importance?: number;
+  source?: string;
 }
 
 export class MemoryStore {
@@ -158,48 +166,102 @@ export class MemoryStore {
   }
 
   /**
+   * Синхронная запись строки memory (upsert) с lifecycle-полями.
+   * Возвращает rowid. НЕ делает эмбеддинг — это ответственность вызывающего
+   * (эмбеддинг асинхронен и не может выполняться внутри SQLite-транзакции).
+   */
+  private storeRow(params: {
+    ns: string;
+    key: string;
+    content: string;
+    metadata: Record<string, unknown>;
+    memoryType: MemoryType;
+    importance: number;
+    source: string | null;
+  }): number {
+    const now = new Date().toISOString();
+    const stmt = this.db.prepare(`
+      INSERT INTO memory
+        (namespace, key, content, metadata, memory_type, importance, source,
+         created_at, updated_at)
+      VALUES
+        (@ns, @key, @content, @meta, @type, @importance, @source, @now, @now)
+      ON CONFLICT(namespace, key) DO UPDATE SET
+        content = excluded.content,
+        metadata = excluded.metadata,
+        memory_type = excluded.memory_type,
+        importance = excluded.importance,
+        source = excluded.source,
+        updated_at = excluded.updated_at
+    `);
+    stmt.run({
+      ns: params.ns,
+      key: params.key,
+      content: params.content,
+      meta: JSON.stringify(params.metadata),
+      type: params.memoryType,
+      importance: params.importance,
+      source: params.source,
+      now,
+    });
+    const rowId = this.rowIdOf(params.ns, params.key);
+    if (rowId === null) {
+      throw new Error("failed to resolve rowid after store");
+    }
+    return rowId;
+  }
+
+  /**
    * Сохраняет значение. Если ключ существует — обновляет.
-   * Все аргументы валидируются Zod-ом.
+   * Все аргументы валидируются Zod-ом. Lifecycle-поля опциональны: при
+   * отсутствии importance берётся из defaultImportance(), тип — episodic.
    */
   async store(
     namespace: string,
     key: string,
     content: string,
     metadata: Record<string, unknown> = {},
+    opts: StoreOptions = {},
   ): Promise<MemoryRecord> {
     const ns = MemoryNamespace.parse(namespace);
     const k = MemoryKey.parse(key);
     const c = ContentString.parse(content);
     assertSafeObject(metadata);
 
-    const now = new Date().toISOString();
-    const metaJson = JSON.stringify(metadata);
+    const memoryType: MemoryType = opts.memoryType ?? "episodic";
+    const importance =
+      typeof opts.importance === "number"
+        ? Math.max(0, Math.min(1, opts.importance))
+        : defaultImportance(c, memoryType);
+    const source = opts.source ?? null;
 
-    // Параметризованный upsert. ИМЕНОВАННЫЕ параметры — никакой конкатенации.
-    // Синхронная часть: запись в memory + FTS-триггеры срабатывают здесь.
-    const stmt = this.db.prepare(`
-      INSERT INTO memory (namespace, key, content, metadata, created_at, updated_at)
-      VALUES (@ns, @key, @content, @meta, @now, @now)
-      ON CONFLICT(namespace, key) DO UPDATE SET
-        content = excluded.content,
-        metadata = excluded.metadata,
-        updated_at = excluded.updated_at
-    `);
-    stmt.run({ ns, key: k, content: c, meta: metaJson, now });
+    const now = new Date().toISOString();
+    const rowId = this.storeRow({
+      ns,
+      key: k,
+      content: c,
+      metadata,
+      memoryType,
+      importance,
+      source,
+    });
 
     this.audit.log({
       source: "memory",
       action: "store",
-      payload: { namespace: ns, key: k, contentLength: c.length },
+      payload: {
+        namespace: ns,
+        key: k,
+        contentLength: c.length,
+        memoryType,
+        importance,
+      },
       outcome: "ok",
     });
 
     // Best-effort векторизация (после синхронной записи). Не блокирует store
     // при отсутствии модели или ошибке — деградирует к FTS-only.
-    const rowId = this.rowIdOf(ns, k);
-    if (rowId !== null) {
-      await this.writeEmbedding(rowId, c);
-    }
+    await this.writeEmbedding(rowId, c);
 
     return {
       namespace: ns,
@@ -209,6 +271,68 @@ export class MemoryStore {
       createdAt: now,
       updatedAt: now,
     };
+  }
+
+  /**
+   * Заменяет устаревший факт новым: создаёт новую запись и помечает старую
+   * superseded_by → новой. Старая запись не удаляется (аудит/история), но по
+   * умолчанию исключается из recall().
+   *
+   * Возвращает rowid новой записи.
+   */
+  async supersede(
+    oldId: number,
+    newContent: string,
+    reason: string,
+  ): Promise<number> {
+    const c = ContentString.parse(newContent);
+
+    interface OldRow {
+      namespace: string;
+      key: string;
+      memory_type: string | null;
+      importance: number | null;
+    }
+
+    const newId = this.db.transaction((): number => {
+      const old = this.db
+        .prepare(
+          "SELECT namespace, key, memory_type, importance FROM memory WHERE rowid = ?",
+        )
+        .get(oldId) as OldRow | undefined;
+      if (!old) throw new Error(`memory ${oldId} not found`);
+
+      const memoryType = (old.memory_type ?? "episodic") as MemoryType;
+      const bumped = Math.min(1, (old.importance ?? 0.5) + 0.1);
+      const id = this.storeRow({
+        ns: old.namespace,
+        key: `${old.key}-v${Date.now()}`,
+        content: c,
+        metadata: {},
+        memoryType,
+        importance: bumped,
+        source: JSON.stringify({ supersedes: oldId, reason }),
+      });
+
+      this.db
+        .prepare(
+          "UPDATE memory SET superseded_by = ?, superseded_at = ? WHERE rowid = ?",
+        )
+        .run(id, Date.now(), oldId);
+
+      return id;
+    })();
+
+    this.audit.log({
+      source: "memory",
+      action: "supersede",
+      payload: { oldId, newId, reason },
+      outcome: "ok",
+    });
+
+    // Эмбеддинг новой записи — вне транзакции (async).
+    await this.writeEmbedding(newId, c);
+    return newId;
   }
 
   get(namespace: string, key: string): MemoryRecord | null {
