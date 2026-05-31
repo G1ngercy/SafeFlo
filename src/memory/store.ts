@@ -26,6 +26,7 @@ import {
 import { safeResolve } from "../security/paths.js";
 import { AuditLogger } from "../audit/logger.js";
 import { migrate, ensureVecLoaded } from "../storage/migrations.js";
+import { EmbeddingService } from "./embedding.js";
 
 export interface MemoryRecord {
   namespace: string;
@@ -43,6 +44,7 @@ export interface SearchResult extends MemoryRecord {
 export class MemoryStore {
   private readonly db: Database.Database;
   private readonly audit: AuditLogger;
+  private readonly embeddings: EmbeddingService;
 
   constructor(projectRoot: string, audit: AuditLogger) {
     const dbDir = safeResolve(projectRoot, ".safeflow");
@@ -54,6 +56,8 @@ export class MemoryStore {
     this.db.pragma("journal_mode = WAL");
     this.db.pragma("foreign_keys = ON");
     this.audit = audit;
+    // Конструирование НЕ скачивает модель — только готовит путь кэша.
+    this.embeddings = new EmbeddingService(dbDir);
 
     // Загружаем sqlite-vec ДО миграций (v2 создаёт vec0-таблицу) и до любых
     // векторных запросов в runtime.
@@ -62,6 +66,46 @@ export class MemoryStore {
     // Базовая v1-схема (idempotent), затем версионные миграции с автобэкапом.
     this.initSchema();
     migrate(this.db, dbPath);
+  }
+
+  /**
+   * rowid записи по (namespace, key). У таблицы memory составной первичный
+   * ключ и неявный rowid — он же ключ для memory_vec.
+   */
+  private rowIdOf(ns: string, key: string): number | null {
+    const row = this.db
+      .prepare("SELECT rowid AS id FROM memory WHERE namespace = ? AND key = ?")
+      .get(ns, key) as { id: number } | undefined;
+    return row ? row.id : null;
+  }
+
+  /**
+   * Best-effort запись эмбеддинга в memory_vec.
+   *
+   * ВАЖНО (safety): если модель ещё не скачана — НЕ инициируем загрузку.
+   * Запись остаётся FTS-only. Реальная загрузка модели происходит только
+   * по явной команде (backfill / benchmark) с согласия пользователя.
+   * Любая ошибка эмбеддинга логируется, но не блокирует запись в memory.
+   */
+  private async writeEmbedding(rowId: number, content: string): Promise<void> {
+    if (this.embeddings.needsDownload()) return;
+    try {
+      const vec = await this.embeddings.embedOne(content);
+      this.db
+        .prepare(
+          "INSERT OR REPLACE INTO memory_vec(memory_id, embedding) VALUES (?, ?)",
+        )
+        .run(rowId, Buffer.from(vec.buffer));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.audit.log({
+        source: "memory",
+        action: "embed_skip",
+        payload: { rowId, message },
+        outcome: "error",
+        reason: message,
+      });
+    }
   }
 
   private initSchema(): void {
@@ -110,12 +154,12 @@ export class MemoryStore {
    * Сохраняет значение. Если ключ существует — обновляет.
    * Все аргументы валидируются Zod-ом.
    */
-  store(
+  async store(
     namespace: string,
     key: string,
     content: string,
     metadata: Record<string, unknown> = {},
-  ): MemoryRecord {
+  ): Promise<MemoryRecord> {
     const ns = MemoryNamespace.parse(namespace);
     const k = MemoryKey.parse(key);
     const c = ContentString.parse(content);
@@ -125,6 +169,7 @@ export class MemoryStore {
     const metaJson = JSON.stringify(metadata);
 
     // Параметризованный upsert. ИМЕНОВАННЫЕ параметры — никакой конкатенации.
+    // Синхронная часть: запись в memory + FTS-триггеры срабатывают здесь.
     const stmt = this.db.prepare(`
       INSERT INTO memory (namespace, key, content, metadata, created_at, updated_at)
       VALUES (@ns, @key, @content, @meta, @now, @now)
@@ -141,6 +186,13 @@ export class MemoryStore {
       payload: { namespace: ns, key: k, contentLength: c.length },
       outcome: "ok",
     });
+
+    // Best-effort векторизация (после синхронной записи). Не блокирует store
+    // при отсутствии модели или ошибке — деградирует к FTS-only.
+    const rowId = this.rowIdOf(ns, k);
+    if (rowId !== null) {
+      await this.writeEmbedding(rowId, c);
+    }
 
     return {
       namespace: ns,

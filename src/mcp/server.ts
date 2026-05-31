@@ -269,7 +269,7 @@ async function main(): Promise<void> {
       try {
         switch (name) {
           case "memory_store": {
-            const rec = memory.store(
+            const rec = await memory.store(
               String(args.namespace),
               String(args.key),
               String(args.content),
