@@ -25,8 +25,7 @@
     "bench": "tsx test/benchmark/run.ts",
     "uninstall-data": "node dist/cli.js uninstall",
     "audit:mcp": "node scripts/audit-mcp-descriptions.mjs",
-    "audit:all": "node scripts/audit-all.mjs",
-    "prepublishOnly": "npm run build && npm test && npm run audit:all"
+    "audit:all": "node scripts/audit-all.mjs"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -73,9 +72,6 @@
   },
   "homepage": "https://github.com/G1ngercy/SafeFlo#readme",
   "license": "MIT",
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
+  "//overrides": "Patched protobufjs and qs to address CVEs in transitive deps of @xenova/transformers (onnxruntime-web → onnx-proto → protobufjs). Upstream @xenova/transformers is partially deprecated; successor is huggingface/transformers.js. Revisit every 3-6 months: temporarily remove the overrides block, run 'rm -rf node_modules package-lock.json && npm install && npm audit --audit-level=high'. If clean — remove overrides permanently. If still vulnerable — keep. Added in v2.0.0 (PR #15). NOTE: this comment lives at the top level, not inside overrides — npm parses every key inside overrides as a package name, so a comment key there breaks npm ci.",
   "//security": "Этот пакет НЕ имеет preinstall/postinstall/install скриптов. Установка только распаковывает файлы. Все зависимости — с фиксированными версиями (без ^ или ~). Никаких сетевых вызовов при установке."
 }

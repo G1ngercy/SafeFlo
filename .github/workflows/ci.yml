@@ -29,7 +29,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: 'npm'
 
       # Используем npm ci — он строго следует package-lock.json и падает,
       # если lock-файл расходится с package.json. Это защита от тихих
@@ -58,7 +57,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -152,7 +150,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
