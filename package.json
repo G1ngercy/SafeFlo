@@ -38,7 +38,6 @@
     "zod": "3.25.76"
   },
   "overrides": {
-    "_comment": "Patched protobufjs and qs to address CVEs in transitive deps of @xenova/transformers (onnxruntime-web → onnx-proto → protobufjs). Upstream @xenova/transformers is partially deprecated; successor is huggingface/transformers.js. Revisit every 3-6 months: temporarily remove overrides block, run 'rm -rf node_modules package-lock.json && npm install && npm audit --audit-level=high'. If clean — remove overrides permanently. If still vulnerable — keep. Added in v2.0.0 (PR #15).",
     "protobufjs": "^7.6.2",
     "qs": "^6.14.0"
   },
@@ -73,5 +72,6 @@
   },
   "homepage": "https://github.com/G1ngercy/SafeFlo#readme",
   "license": "MIT",
+  "//overrides": "Patched protobufjs and qs to address CVEs in transitive deps of @xenova/transformers (onnxruntime-web → onnx-proto → protobufjs). Upstream @xenova/transformers is partially deprecated; successor is huggingface/transformers.js. Revisit every 3-6 months: temporarily remove the overrides block, run 'rm -rf node_modules package-lock.json && npm install && npm audit --audit-level=high'. If clean — remove overrides permanently. If still vulnerable — keep. Added in v2.0.0 (PR #15). NOTE: this comment lives at the top level, not inside overrides — npm parses every key inside overrides as a package name, so a comment key there breaks npm ci.",
   "//security": "Этот пакет НЕ имеет preinstall/postinstall/install скриптов. Установка только распаковывает файлы. Все зависимости — с фиксированными версиями (без ^ или ~). Никаких сетевых вызовов при установке."
 }
