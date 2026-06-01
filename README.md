@@ -231,7 +231,7 @@ The full threat model and guarantees are in [SECURITY.md](SECURITY.md). Quick su
 - **Idempotent migrations with automatic backups** to `./.safeflow/backups/` before any schema change.
 - **Complete uninstall** with a single command.
 - **Pinned dependencies** — 5 packages with exact versions (`@modelcontextprotocol/sdk`, `better-sqlite3`, `sqlite-vec`, `@xenova/transformers`, `zod`).
-- **Provenance** — npm packages are published with cryptographic attestation via GitHub Actions.
+- **Distribution via `git clone`** — no npm registry, no `curl | bash` installer. You build from a pinned `package-lock.json`; releases are tagged commits with GitHub Release notes (see [docs/RELEASE.md](docs/RELEASE.md)).
 
 Vulnerabilities — through private security advisory, **not** through public issues. See [SECURITY.md](SECURITY.md#reporting-a-vulnerability).
 

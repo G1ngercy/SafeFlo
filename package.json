@@ -25,8 +25,7 @@
     "bench": "tsx test/benchmark/run.ts",
     "uninstall-data": "node dist/cli.js uninstall",
     "audit:mcp": "node scripts/audit-mcp-descriptions.mjs",
-    "audit:all": "node scripts/audit-all.mjs",
-    "prepublishOnly": "npm run build && npm test && npm run audit:all"
+    "audit:all": "node scripts/audit-all.mjs"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -73,9 +72,5 @@
   },
   "homepage": "https://github.com/G1ngercy/SafeFlo#readme",
   "license": "MIT",
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
   "//security": "Этот пакет НЕ имеет preinstall/postinstall/install скриптов. Установка только распаковывает файлы. Все зависимости — с фиксированными версиями (без ^ или ~). Никаких сетевых вызовов при установке."
 }

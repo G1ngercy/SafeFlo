@@ -27,7 +27,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install
         run: npm ci
@@ -81,41 +80,3 @@ jobs:
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
-
-  # Публикация в npm — отдельный шаг, требует NPM_TOKEN.
-  # Использует provenance для подтверждения происхождения пакета
-  # (npm attestation, см. https://docs.npmjs.com/generating-provenance-statements).
-  npm-publish:
-    name: Publish to npm
-    needs: preflight
-    runs-on: ubuntu-latest
-    # Требуем id-token для provenance; contents read для checkout.
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Install
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      # npm publish с --provenance даёт криптографическую гарантию того,
-      # что пакет был собран именно из этого репозитория, этой версии
-      # GitHub Actions, в этом workflow.
-      # Это противоположность ситуации с ruflo, где npm-пакеты можно было
-      # подменить локально перед публикацией.
-      - name: Publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --provenance --access public
