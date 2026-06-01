@@ -102,3 +102,31 @@ test("supersede: throws on missing id", async () => {
   await assert.rejects(() => m.supersede(99999, "x", "y"));
   m.close();
 });
+
+test("recall: access_count increments each time a record is returned", async () => {
+  const root = mkTmp();
+  const m = new MemoryStore(root, new AuditLogger(root));
+  await m.store("ns", "k", "we will use MySQL for the project");
+
+  const Database = (await import("better-sqlite3")).default;
+  const db = new Database(path.join(root, ".safeflow", "memory.db"));
+  const readCount = () =>
+    db
+      .prepare("SELECT access_count FROM memory WHERE key='k'")
+      .get().access_count;
+
+  assert.equal(readCount(), 0, "starts at 0 before any recall");
+
+  const first = await m.recall({ namespace: "ns", query: "project", limit: 10 });
+  assert.ok(
+    first.some((r) => r.key === "k"),
+    "record is returned by recall",
+  );
+  assert.equal(readCount(), 1, "incremented to 1 after first recall");
+
+  await m.recall({ namespace: "ns", query: "project", limit: 10 });
+  assert.equal(readCount(), 2, "incremented to 2 after second recall");
+
+  db.close();
+  m.close();
+});

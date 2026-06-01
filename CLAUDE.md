@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-Контекст для Claude Code при работе в репозитории SafeFlow.
+Контекст для Claude Code при работе в репозитории SafeFlo.
 
 ## О проекте
 
-SafeFlow — локальный MCP-сервер для Claude Code: persistent memory, task planning, agent coordination. Без сети, без скрытых install-скриптов, без модификации файлов за пределами проекта.
+SafeFlo — локальный MCP-сервер для Claude Code: persistent memory, task planning, agent coordination. Без сети, без скрытых install-скриптов, без модификации файлов за пределами проекта.
 
 **Стек:** TypeScript 5.x, Node.js >= 20, `better-sqlite3`, `@modelcontextprotocol/sdk`, `zod`.
 
@@ -41,7 +41,7 @@ npm run lint        # линтер
 
 - **Скачиванием модели эмбеддингов** (`@xenova/transformers` первый вызов pipeline). Это ~120MB сетевого трафика — пользователь должен подтвердить явно.
 - **Установкой новых зависимостей**, не указанных в task-файле.
-- **Любым действием за пределами рабочего репозитория** (`/Users/truten/Desktop/ClaudeCode/SafeFlo`).
+- **Любым действием за пределами рабочего репозитория** (за пределами `<repo-root>`).
 
 ### Никогда не делай
 
@@ -64,7 +64,7 @@ npm run lint        # линтер
 
 ## Окружение пользователя
 
-- macOS, путь репозитория `/Users/truten/Desktop/ClaudeCode/SafeFlo`
+- macOS, путь репозитория — `<repo-root>`
 - Песочница для миграций: `/tmp/safeflow-sandbox/`
 - Реальная production-память пользователя — в **другом** проекте, **не здесь**. Не пытайся её найти.
 
