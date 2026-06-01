@@ -1,4 +1,4 @@
-// ESLint flat config для SafeFlow.
+// ESLint flat config для SafeFlo.
 // Цель: рекомендованные правила @typescript-eslint + строгий запрет `any`.
 // `any` разрешён только через явный `// eslint-disable-next-line` с комментарием почему.
 import js from "@eslint/js";
