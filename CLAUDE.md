@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-Контекст для Claude Code при работе в репозитории SafeFlow.
+Контекст для Claude Code при работе в репозитории SafeFlo.
 
 ## О проекте
 
-SafeFlow — локальный MCP-сервер для Claude Code: persistent memory, task planning, agent coordination. Без сети, без скрытых install-скриптов, без модификации файлов за пределами проекта.
+SafeFlo — локальный MCP-сервер для Claude Code: persistent memory, task planning, agent coordination. Без сети, без скрытых install-скриптов, без модификации файлов за пределами проекта.
 
 **Стек:** TypeScript 5.x, Node.js >= 20, `better-sqlite3`, `@modelcontextprotocol/sdk`, `zod`.
 

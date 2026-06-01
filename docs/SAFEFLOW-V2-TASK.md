@@ -1,4 +1,4 @@
-# SafeFlow v2.0 — Полное задание
+# SafeFlo v2.0 — Полное задание
 
 **Режим работы:** одна сессия, всё задание целиком.
 **Оценка времени:** 1-3 часа активной работы.
@@ -684,14 +684,14 @@ function reciprocalRank(retrieved: string[], expected: string[]): number {
 ```markdown
 ## Network calls
 
-SafeFlow does not make network calls during memory operations at runtime.
+SafeFlo does not make network calls during memory operations at runtime.
 
 One-time exception: the embedding model (~120MB) is downloaded from 
 Hugging Face on first use, into `./.safeflow/models/`. After this download, 
 no further network access is required.
 
 You can opt out entirely by passing `--no-embeddings` to `safeflow init`. 
-In that mode, SafeFlow falls back to FTS5-only search.
+In that mode, SafeFlo falls back to FTS5-only search.
 ```
 
 ### CHANGELOG.md
@@ -771,7 +771,7 @@ ls /tmp/safeflow-sandbox-test/.safeflow/backups/
 ```bash
 git push -u origin feat/v2-hybrid-memory
 # Открой PR через gh CLI или дай мне URL для ручного открытия
-gh pr create --title "SafeFlow v2.0: hybrid memory with agent lifecycle" \
+gh pr create --title "SafeFlo v2.0: hybrid memory with agent lifecycle" \
   --body "См. docs/SAFEFLOW-V2-TASK.md. Бенчмарк-результаты в benchmark-results/."
 ```
 
@@ -784,7 +784,7 @@ gh pr create --title "SafeFlow v2.0: hybrid memory with agent lifecycle" \
 В конце выведи в чат:
 
 ```markdown
-## SafeFlow v2.0 — отчёт о реализации
+## SafeFlo v2.0 — отчёт о реализации
 
 ### Бенчмарк (главное)
 | Тип запроса | v1 recall@5 | v2 recall@5 | Δ |
