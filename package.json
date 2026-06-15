@@ -44,7 +44,7 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/better-sqlite3": "7.6.13",
-    "@types/node": "22.7.4",
+    "@types/node": "22.19.21",
     "eslint": "10.4.1",
     "globals": "17.6.0",
     "tsx": "4.22.4",
